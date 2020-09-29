@@ -39,6 +39,7 @@ $.ajax({
 });
 
 $('button').click(function () {
+  console.log('clicked');
   $.ajax({
     type: 'POST',
     url: 'http://0.0.0.0:5001/api/v1/places_search/',
