@@ -1,40 +1,78 @@
+const $ = window.$;
+const amenityDict = {};
+const titleString = '<article><div class="title_box"><h2></h2><div class="price_by_night"></div></div>';
+const infoString = '<div class="information"><div class="max_guest"></div><div class="number_rooms"></div><div class="number_bathrooms"></div></div>';
+const descString = '<div class="description"></div></article>';
+const htmlString = titleString + infoString + descString;
 $(document).ready(function () {
-  const amenities = {};
-
-  $('input:checkbox').click(function () {
-    $(this).each(function () {
-      if (this.checked) {
-        amenities[$(this).data('id')] = $(this).data('name');
-      } else {
-        delete amenities[$(this).data('id')];
-      }
-    });
-    if (Object.values(amenities).length > 0) {
-      $('.amenities h4').text(Object.values(amenities).join(', '));
+  $.getJSON('http://0.0.0.0:5001/api/v1/status/', function (data) {
+    if (data.status === 'OK') {
+      $('#api_status').addClass('available');
     } else {
-      $('.amenities h4').html('&nbsp');
+      $('#api_status').removeClass('available');
     }
   });
-});
-
-$.get('http://0.0.0.0:5001/api/v1/status/', function (data, status) {
-
-  if (data.status === 'OK') {
-    $('DIV#api_status').addClass('available');
-  } else {
-    $('DIV#api_status').removeClass('available');
-  }
-});
-
-$.ajax({
-  type: 'POST',
-  url: 'http://0.0.0.0:5001/api/v1/places_search/',
-  contentType: 'application/json',
-  dataType: 'json',
-  data: '{}',
-  success: function (data) {
-    for (const place of Object.values(data)) {
-      $('section.places').append('<article><div class="title"><h2>' + place.name + '</h2><div class="price_by_night">' + place.price_by_night + '</div></div><div class="information">' + '<div class="max_guest">' + '<i class="fa fa-users fa-3x" aria-hidden="true"></i><br />' + place.max_guest + ' Guests</div>' + '<div class="number_rooms">' + '<i class="fa fa-bed fa-3x" aria-hidden="true"></i><br />' + place.number_rooms + ' Bedrooms</div>' + '<div class="number_bathrooms">' + '<i class="fa fa-bath fa-3x" aria-hidden+"true"></i><br />' + place.number_bathrooms + 'Bathrooms</div></div>' + '<div class="description">' + place.description + '</div></article>');
+  $.ajax({
+    type: 'POST',
+    url: 'http://0.0.0.0:5001/api/v1/places_search/',
+    data: JSON.stringify({ body: {} }),
+    dataType: 'json',
+    contentType: 'application/json',
+    success: function (response) {
+      response.forEach((place) => {
+        $(htmlString).appendTo('section.places');
+        $('.title_box h2').last().html(place.name);
+        $('.title_box .price_by_night')
+          .last()
+          .html('$' + place.price_by_night);
+        if (place.max_guest === 1) {
+          $('.information .max_guest')
+            .last()
+            .html(place.max_guest + ' Guest');
+        } else {
+          $('.information .max_guest')
+            .last()
+            .html(place.max_guest + ' Guests');
+        }
+        if (place.number_rooms === 1) {
+          $('.information .number_rooms')
+            .last()
+            .html(place.number_rooms + ' Room');
+        } else {
+          $('.information .number_rooms')
+            .last()
+            .html(place.number_rooms + ' Rooms');
+        }
+        if (place.number_bathrooms === 1) {
+          $('.information .number_bathrooms')
+            .last()
+            .html(place.number_bathrooms + ' Bathroom');
+        } else {
+          $('.information .number_bathrooms')
+            .last()
+            .html(place.number_bathrooms + ' Bathrooms');
+        }
+        $('.description').last().html(place.description);
+      });
     }
-  }
+  });
+  $('li input').click(function () {
+    if (this.checked) {
+      amenityDict[$(this).attr('data-id')] = $(this).attr('data-name');
+    } else {
+      delete amenityDict[$(this).attr('data-id')];
+    }
+    $('.amenities h4').empty();
+    const amenityDictKeys = Object.keys(amenityDict);
+    const amenityDictLength = amenityDictKeys.length;
+    amenityDictKeys.forEach(function (key, index) {
+      $('.amenities h4').append(amenityDict[key]);
+      if (index !== amenityDictLength - 1) {
+        $('.amenities h4').append(', ');
+      }
+    });
+    if (amenityDictLength === 0) {
+      $('.amenities h4').append('&nbsp;');
+    }
+  });
 });
